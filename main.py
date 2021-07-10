@@ -3,6 +3,12 @@ from kickdata import wallkickdata as kd
 import time
 import random
 import pygame
+import math
+def getunit(x,y):
+        magnitude=math.sqrt(x**2+y**2)
+        return [x/magnitude,y/magnitude] if magnitude != 0 else [0,0]
+    
+    
 class tetris():
     def __init__(self):
         self.hei=40
@@ -20,6 +26,7 @@ class tetris():
         self.points=0
         self.combo=0
         self.totallines=40
+        self.v=[0,0]
         
 
     def pygame(self,pg,screen,offset=[200,100],size=20,colors=['#7f7f7f','#0341AE','#0000ff','#ff7f00','#ffff00','#00ff00','#800080','#ff0000']):
@@ -221,6 +228,7 @@ lockingdelay=0.6
 pygame.init()
 screen=pygame.display.set_mode([800,600])
 T.pygame(pygame,screen)
+originalof=T.offset
 clock=pygame.time.Clock()
 running=True
 ori=time.time()
@@ -231,11 +239,18 @@ dire=[True,True]
 h=[-1,-1]
 das=0.09
 arr=0.01
+velocity=[0,0]
 rotatesound = pygame.mixer.Sound("rotate.wav")
 movesound = pygame.mixer.Sound("move.wav")
 harddropsound = pygame.mixer.Sound("harddrop.wav")
 holdsound=pygame.mixer.Sound("hold.wav")
+getTicksLastFrame = pygame.time.get_ticks()
 while running:
+    t = pygame.time.get_ticks()
+    # deltaTime in seconds.
+    deltaTime = (t - getTicksLastFrame) / 1000.0
+    getTicksLastFrame = t
+    
     screen.fill(0)
     clock.tick(30)
     for event in pygame.event.get():
@@ -258,7 +273,6 @@ while running:
                     timers[1]=cur
                 
                 
-                
             elif event.key==pygame.K_a:
                 dire[1]==True
                 if T.move([-1,0]):
@@ -266,15 +280,18 @@ while running:
                     timers[0]=cur
                     timers[2]=cur
                 
+                
             elif event.key==pygame.K_k:
                 if T.rotate(1):
                     pygame.mixer.Sound.play(rotatesound)
                     timers[0]=cur
                 
+                
             elif event.key==pygame.K_l:
                 if T.rotate(-1):
                     pygame.mixer.Sound.play(rotatesound)
                     timers[0]=cur
+                
                 
             elif event.key==pygame.K_SPACE:
                 if hold:
@@ -288,7 +305,10 @@ while running:
                         h2=h
                         h=T.currentpiece
                         T.setpiece(h2[0])
+                        
+                        
             elif event.key==pygame.K_w:
+                velocity[1]+=(40-T.currenty)/2
                 while T.move([0,1]):
                     pass
                 if not T.move([0,1]):
@@ -297,17 +317,24 @@ while running:
                     running=False
                 hold=True
                         
+                        
     keys=pygame.key.get_pressed()
     if keys[pygame.K_d] and dire[0]:
         if cur-timers[1]>das and cur-timers[3]>arr:
             timers[3]=cur
             if T.move([1,0]):
                 pygame.mixer.Sound.play(movesound)
+            else:
+                velocity=[velocity[0]+5,velocity[1]]
+                
+                
     if keys[pygame.K_a] and dire[1]:
         if cur-timers[2]>das and cur-timers[4]>arr:
             timers[4]=cur
             if T.move([-1,0]):
                 pygame.mixer.Sound.play(movesound)
+            else:
+                velocity=[velocity[0]-5,velocity[1]]
     
         
     cur=time.time()
@@ -315,15 +342,30 @@ while running:
         down=cur
         ori=cur
         if not T.move([0,1]):
+            if keys[pygame.K_s]:
+                velocity[1]+=5
             pass
         else:
+            if keys[pygame.K_s]:
+                pygame.mixer.Sound.play(movesound)
             timers[0]=cur
+            
+        
         
     if cur-timers[0]>0.5:
         timers[0]=cur
         hold=True
         if not T.newpiece():
             running=False
+    v2=((T.offset[0]-originalof[0]),(T.offset[1]-originalof[1]))
+    velocity=[velocity[0]-(deltaTime*(5*v2[0])),velocity[1]-(deltaTime*(5*v2[1]))]
+    velocity=[nor if abs(nor:=velocity[0]*0.5)>0.1 else 0,
+              nor if abs(nor:=velocity[1]*0.5)>0.1 else 0]
+    
+    T.offset=[T.offset[0]+velocity[0],T.offset[1]+velocity[1]]
+    
+    
+    #displays
     if h!=[-1,-1]:
         p=T.ps[h[0]][0]
         yi=0
