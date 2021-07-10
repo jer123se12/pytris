@@ -27,6 +27,7 @@ class tetris():
         self.combo=0
         self.totallines=40
         self.v=[0,0]
+        self.h=[-1,-1]
         
 
     def pygame(self,pg,screen,offset=[200,100],size=20,colors=['#7f7f7f','#0341AE','#0000ff','#ff7f00','#ffff00','#00ff00','#800080','#ff0000']):
@@ -155,7 +156,13 @@ class tetris():
             self.removePiece(self.currentpiece[0],self.currentpiece[1],self.currentx,self.currenty)
             for i in range(self.currenty,40):
                 if not self.placePiece(self.currentpiece[0],self.currentpiece[1],self.currentx,i):
-                    g=[self.currentx,i-1,len(self.ps[self.currentpiece[0]][self.currentpiece[1]]),len(self.ps[self.currentpiece[0]][self.currentpiece[1]][0]),self.currentpiece[0]]
+                    g=[
+                        self.currentx,
+                        i-1,
+                        len(self.ps[self.currentpiece[0]][self.currentpiece[1]]),
+                        len(self.ps[self.currentpiece[0]][self.currentpiece[1]][0]),
+                        self.currentpiece[0]
+                        ]
                     break
             p=self.ps[self.currentpiece[0]][self.currentpiece[1]]
             self.place(self.currentpiece[0],self.currentpiece[1],self.currentx,self.currenty)
@@ -163,31 +170,60 @@ class tetris():
         for y in self.field[20:]:
             xi=0
             for x in y:
-                self.pg.draw.rect(self.screen,
-                                  self.colors[x],
-                                  (self.offset[0]+(self.tilesize*xi),
-                                   self.offset[1]+(self.tilesize*yi),
-                                   self.tilesize, self.tilesize))
+                tx=self.offset[0]+(self.tilesize*xi)
+                ty=self.offset[1]+(self.tilesize*yi)
+                if x!=0:
+                    self.pg.draw.rect(self.screen,self.colors[x],(tx,ty,self.tilesize, self.tilesize))
                 
                 if x==0 :
-                    self.pg.draw.rect(self.screen,
-                                  (100,100,100),
-                                  (self.offset[0]+(self.tilesize*xi),
-                                   self.offset[1]+(self.tilesize*yi),
-                                   self.tilesize, self.tilesize),1)
+                    s = self.pg.Surface((self.tilesize,self.tilesize))
+                    s.set_alpha(128)
+                    s.fill((50,50,50))
+                    self.screen.blit(s, (tx,ty))
+                    self.pg.draw.rect(self.screen,(110,110,110),(tx,ty,self.tilesize, self.tilesize),1)
                 if self.ghost:
                     if (xi>=g[0] and
                         xi<g[0]+g[3] and
                         yi+20>=g[1] and
                         yi+20<g[1]+g[2] and
                         p[(yi+20)-g[1]][xi-g[0]]!=0):
+                            
                             self.pg.draw.rect(self.screen,
-                                              self.colors[g[4]+1],
-                                              (self.offset[0]+(self.tilesize*xi),
-                                               self.offset[1]+(self.tilesize*yi),
-                                               self.tilesize, self.tilesize),3)
+                                              tuple([co*0.5 for co in self.colors[g[4]+1]]),
+                                              (tx,ty,self.tilesize, self.tilesize))
+                            self.pg.draw.rect(self.screen,(110,110,110),(tx,ty,self.tilesize, self.tilesize),1)
                 xi+=1
             yi+=1
+        ys=0
+        for psp in self.bag[:6]:
+            p=self.ps[psp][0]
+            yi=0
+            for y in p:
+                xi=0
+                for x in y:
+                    if x!=0:
+                        self.pg.draw.rect(self.screen,
+                                      self.colors[x],
+                                      (self.offset[0]+(self.tilesize*self.wid)+(len(p[0])*20)+(self.tilesize*xi),
+                                       self.offset[1]+(ys*4*self.tilesize)+(self.tilesize*yi),
+                                       self.tilesize, self.tilesize))
+                    xi+=1
+                yi+=1
+            ys+=1
+        if self.h!=[-1,-1]:
+            p=self.ps[self.h[0]][0]
+            yi=0
+            for y in p:
+                xi=0
+                for x in y:
+                    if x!=0:
+                        self.pg.draw.rect(self.screen,
+                                      self.colors[x],
+                                      (self.offset[0]-((len(p[0])+1)*20)+(self.tilesize*xi),
+                                       self.offset[1]+(self.tilesize*yi),
+                                       self.tilesize, self.tilesize))
+                    xi+=1
+                yi+=1
         
 
     def place(self,n,r,x,y):
@@ -297,13 +333,13 @@ while running:
                 if hold:
                     pygame.mixer.Sound.play(holdsound)
                     hold=False
-                    if h==[-1,-1]:
-                        h=T.currentpiece
+                    if T.h==[-1,-1]:
+                        T.h=T.currentpiece
                         T.setpiece(T.getnewpiece())
                         hold=True
                     else:
-                        h2=h
-                        h=T.currentpiece
+                        h2=T.h
+                        T.h=T.currentpiece
                         T.setpiece(h2[0])
                         
                         
@@ -365,37 +401,9 @@ while running:
     T.offset=[T.offset[0]+velocity[0],T.offset[1]+velocity[1]]
     
     
-    #displays
-    if h!=[-1,-1]:
-        p=T.ps[h[0]][0]
-        yi=0
-        for y in p:
-            xi=0
-            for x in y:
-                if x!=0:
-                    pygame.draw.rect(screen,
-                                  T.colors[x],
-                                  (T.offset[0]-((len(p[0])+1)*20)+(T.tilesize*xi),
-                                   T.offset[1]+(T.tilesize*yi),
-                                   T.tilesize, T.tilesize))
-                xi+=1
-            yi+=1
-    ys=0
-    for psp in T.bag[:6]:
-        p=T.ps[psp][0]
-        yi=0
-        for y in p:
-            xi=0
-            for x in y:
-                if x!=0:
-                    pygame.draw.rect(screen,
-                                  T.colors[x],
-                                  (T.offset[0]+(T.tilesize*T.wid)+(len(p[0])*20)+(T.tilesize*xi),
-                                   T.offset[1]+(ys*4*T.tilesize)+(T.tilesize*yi),
-                                   T.tilesize, T.tilesize))
-                xi+=1
-            yi+=1
-        ys+=1
+    
+    
+    
     T.printboard2()
     pygame.display.update()
 
