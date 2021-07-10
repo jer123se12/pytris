@@ -189,9 +189,9 @@ class tetris():
                         p[(yi+20)-g[1]][xi-g[0]]!=0):
                             
                             self.pg.draw.rect(self.screen,
-                                              tuple([co*0.5 for co in self.colors[g[4]+1]]),
+                                              tuple([co*0.7 for co in self.colors[g[4]+1]]),
                                               (tx,ty,self.tilesize, self.tilesize))
-                            self.pg.draw.rect(self.screen,(110,110,110),(tx,ty,self.tilesize, self.tilesize),1)
+#                             self.pg.draw.rect(self.screen,(110,110,110),(tx,ty,self.tilesize, self.tilesize),1)
                 xi+=1
             yi+=1
         ys=0
@@ -262,7 +262,9 @@ class tetris():
 T=tetris()
 lockingdelay=0.6
 pygame.init()
-screen=pygame.display.set_mode([800,600])
+wid=800
+hei=600
+screen=pygame.display.set_mode([wid,hei])
 T.pygame(pygame,screen)
 originalof=T.offset
 clock=pygame.time.Clock()
@@ -282,11 +284,11 @@ harddropsound = pygame.mixer.Sound("harddrop.wav")
 holdsound=pygame.mixer.Sound("hold.wav")
 getTicksLastFrame = pygame.time.get_ticks()
 while running:
+    cur=time.time()
     t = pygame.time.get_ticks()
     # deltaTime in seconds.
     deltaTime = (t - getTicksLastFrame) / 1000.0
     getTicksLastFrame = t
-    
     screen.fill(0)
     clock.tick(30)
     for event in pygame.event.get():
@@ -338,6 +340,7 @@ while running:
                         T.setpiece(T.getnewpiece())
                         hold=True
                     else:
+                        hold=False
                         h2=T.h
                         T.h=T.currentpiece
                         T.setpiece(h2[0])
@@ -354,6 +357,19 @@ while running:
                 hold=True
                         
                         
+            elif event.key==pygame.K_e:
+                pause=True
+                pauses=cur
+                selected=0
+                while not pause:
+                    cur=time.time()
+                    if cur-pauses<0.5:
+                        percent=(cur-pauses)/0.5
+                        #put pause buttons here
+                        
+                        
+                    
+                    
     keys=pygame.key.get_pressed()
     if keys[pygame.K_d] and dire[0]:
         if cur-timers[1]>das and cur-timers[3]>arr:
@@ -373,7 +389,6 @@ while running:
                 velocity=[velocity[0]-5,velocity[1]]
     
         
-    cur=time.time()
     if (keys[pygame.K_s] and cur-down>0.01) or cur-ori>0.3:
         down=cur
         ori=cur
@@ -395,15 +410,10 @@ while running:
             running=False
     v2=((T.offset[0]-originalof[0]),(T.offset[1]-originalof[1]))
     velocity=[velocity[0]-(deltaTime*(5*v2[0])),velocity[1]-(deltaTime*(5*v2[1]))]
-    velocity=[nor if abs(nor:=velocity[0]*0.5)>0.1 else 0,
-              nor if abs(nor:=velocity[1]*0.5)>0.1 else 0]
+    velocity=[nor if abs(nor:=velocity[0]*0.5)>0.2 else 0,
+              nor if abs(nor:=velocity[1]*0.5)>0.2 else 0]
     
     T.offset=[T.offset[0]+velocity[0],T.offset[1]+velocity[1]]
-    
-    
-    
-    
-    
     T.printboard2()
     pygame.display.update()
 
