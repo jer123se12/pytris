@@ -258,7 +258,6 @@ class tetris():
         
             
                             
-        
 T=tetris()
 lockingdelay=0.6
 pygame.init()
@@ -283,6 +282,8 @@ movesound = pygame.mixer.Sound("move.wav")
 harddropsound = pygame.mixer.Sound("harddrop.wav")
 holdsound=pygame.mixer.Sound("hold.wav")
 getTicksLastFrame = pygame.time.get_ticks()
+pygame.font.init()
+myfont = pygame.font.SysFont('monospace', 30)
 while running:
     cur=time.time()
     t = pygame.time.get_ticks()
@@ -361,11 +362,71 @@ while running:
                 pause=True
                 pauses=cur
                 selected=0
-                while not pause:
+                while pause:
+                    T.printboard2()
+                    s = pygame.Surface((wid,hei))
+                    s.set_alpha(100)
+                    s.fill((0,0,0))
+                    screen.blit(s, (0,0))
                     cur=time.time()
-                    if cur-pauses<0.5:
-                        percent=(cur-pauses)/0.5
-                        #put pause buttons here
+                    if cur-pauses<0.2:
+                        percent=(cur-pauses)/0.2
+                    else:
+                        percent=1
+                    if not selected==0:
+                        pygame.draw.rect(screen,(100,100,100),(((wid/2)-100)*percent,((hei/2)-150),200*percent,100))
+                    else:
+                        pygame.draw.rect(screen,(100,100,100),(((wid/2)-110)*percent,((hei/2)-160),220*percent,120))
+                    if not selected==1:
+                        pygame.draw.rect(screen,(100,100,100),(((wid/2)-100)*percent,((hei/2)+10),200*percent,100))
+                    else:
+                        pygame.draw.rect(screen,(100,100,100),(((wid/2)-110)*percent,((hei/2)),220*percent,120))
+                    if cur-pauses>0.2:
+                        resume=myfont.render('Resume',True,40)
+                        text_rect = resume.get_rect(center=((wid/2), (hei/2)-100))
+                        screen.blit(resume,text_rect)
+                        qu=myfont.render('QUIT',True,40)
+                        text_rect = qu.get_rect(center=((wid/2), (hei/2)+60))
+                        screen.blit(qu,text_rect)
+                    for event in pygame.event.get():
+                        if event.type==pygame.QUIT:
+                            running=False
+                        if event.type==pygame.KEYDOWN:
+                            if event.key==pygame.K_DOWN:
+                                selected=1
+                            if event.key==pygame.K_UP:
+                                selected=0
+                            if event.key==pygame.K_RETURN:
+                                if selected==0:
+                                    pause=False
+                                elif selected==1:
+                                    running=False
+                                    pause=False
+                            if event.key==pygame.K_e:
+                                endanimation=cur
+                                while cur-endanimation<0.2:
+                                    T.printboard2()
+                                    s = pygame.Surface((wid,hei))
+                                    s.set_alpha(100)
+                                    s.fill((0,0,0))
+                                    screen.blit(s, (0,0))
+                                    cur=time.time()
+                                    percent=1-((cur-endanimation)/0.2)
+                                    if not selected==0:
+                                        pygame.draw.rect(screen,(100,100,100),(((wid/2)-100)*percent,((hei/2)-150),200*percent,100))
+                                    else:
+                                        pygame.draw.rect(screen,(100,100,100),(((wid/2)-110)*percent,((hei/2)-160),220*percent,120))
+                                    if not selected==1:
+                                        pygame.draw.rect(screen,(100,100,100),(((wid/2)-100)*percent,((hei/2)+10),200*percent,100))
+                                    else:
+                                        pygame.draw.rect(screen,(100,100,100),(((wid/2)-110)*percent,((hei/2)),220*percent,120))
+                                    for event in pygame.event.get():
+                                        if event.type==pygame.QUIT:
+                                            running=False
+                                    pygame.display.update()
+                                pause=False
+                                
+                    pygame.display.update()
                         
                         
                     
