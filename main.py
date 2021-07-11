@@ -28,6 +28,7 @@ class tetris():
         self.totallines=40
         self.v=[0,0]
         self.h=[-1,-1]
+        self.hold=True
         
 
     def pygame(self,pg,screen,offset=[200,100],size=20,colors=['#7f7f7f','#0341AE','#0000ff','#ff7f00','#ffff00','#00ff00','#800080','#ff0000']):
@@ -172,9 +173,6 @@ class tetris():
             for x in y:
                 tx=self.offset[0]+(self.tilesize*xi)
                 ty=self.offset[1]+(self.tilesize*yi)
-                if x!=0:
-                    self.pg.draw.rect(self.screen,self.colors[x],(tx,ty,self.tilesize, self.tilesize))
-                
                 if x==0 :
                     s = self.pg.Surface((self.tilesize,self.tilesize))
                     s.set_alpha(128)
@@ -191,6 +189,10 @@ class tetris():
                             self.pg.draw.rect(self.screen,
                                               tuple([co*0.7 for co in self.colors[g[4]+1]]),
                                               (tx,ty,self.tilesize, self.tilesize))
+                if x!=0:
+                    self.pg.draw.rect(self.screen,self.colors[x],(tx,ty,self.tilesize, self.tilesize))
+                
+                
 #                             self.pg.draw.rect(self.screen,(110,110,110),(tx,ty,self.tilesize, self.tilesize),1)
                 xi+=1
             yi+=1
@@ -218,13 +220,19 @@ class tetris():
                 for x in y:
                     if x!=0:
                         self.pg.draw.rect(self.screen,
-                                      self.colors[x],
+                                      [co*0.5 if not self.hold else co for co in self.colors[x]],
                                       (self.offset[0]-((len(p[0])+1)*20)+(self.tilesize*xi),
                                        self.offset[1]+(self.tilesize*yi),
                                        self.tilesize, self.tilesize))
                     xi+=1
                 yi+=1
-        
+        self.pg.draw.lines(self.screen,(255,255,255),False,(
+                           (T.offset[0],T.offset[1]),
+                           (T.offset[0],T.offset[1]+(20*self.tilesize)),
+                           (T.offset[0]+(self.wid*self.tilesize),T.offset[1]+(20*self.tilesize)),
+                           (T.offset[0]+(self.wid*self.tilesize),T.offset[1])
+                           ),5)
+    
 
     def place(self,n,r,x,y):
         p=self.ps[n][r]
@@ -340,8 +348,10 @@ while running:
                         T.h=T.currentpiece
                         T.setpiece(T.getnewpiece())
                         hold=True
+                        T.hold=hold
                     else:
                         hold=False
+                        T.hold=hold
                         h2=T.h
                         T.h=T.currentpiece
                         T.setpiece(h2[0])
@@ -398,6 +408,27 @@ while running:
                                 selected=0
                             if event.key==pygame.K_RETURN:
                                 if selected==0:
+                                    endanimation=cur
+                                    while cur-endanimation<0.2:
+                                        T.printboard2()
+                                        s = pygame.Surface((wid,hei))
+                                        s.set_alpha(100)
+                                        s.fill((0,0,0))
+                                        screen.blit(s, (0,0))
+                                        cur=time.time()
+                                        percent=1-((cur-endanimation)/0.2)
+                                        if not selected==0:
+                                            pygame.draw.rect(screen,(100,100,100),(((wid/2)-100)*percent,((hei/2)-150),200*percent,100))
+                                        else:
+                                            pygame.draw.rect(screen,(100,100,100),(((wid/2)-110)*percent,((hei/2)-160),220*percent,120))
+                                        if not selected==1:
+                                            pygame.draw.rect(screen,(100,100,100),(((wid/2)-100)*percent,((hei/2)+10),200*percent,100))
+                                        else:
+                                            pygame.draw.rect(screen,(100,100,100),(((wid/2)-110)*percent,((hei/2)),220*percent,120))
+                                        for event in pygame.event.get():
+                                            if event.type==pygame.QUIT:
+                                                running=False
+                                        pygame.display.update()
                                     pause=False
                                 elif selected==1:
                                     running=False
@@ -475,6 +506,7 @@ while running:
               nor if abs(nor:=velocity[1]*0.5)>0.2 else 0]
     
     T.offset=[T.offset[0]+velocity[0],T.offset[1]+velocity[1]]
+    T.hold=hold
     T.printboard2()
     pygame.display.update()
 
