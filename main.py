@@ -1,3 +1,5 @@
+#clear condition
+#
 from tetrispieces import tetrispieces as tps
 from kickdata import wallkickdata as kd
 import time
@@ -23,9 +25,10 @@ class tetris():
         self.ps=self.ps.collated()
         self.ghost=True
         self.lines=0
+        self.goal=40
         self.points=0
         self.combo=0
-        self.totallines=40
+        self.totallines=0
         self.v=[0,0]
         self.h=[-1,-1]
         self.hold=True
@@ -46,6 +49,7 @@ class tetris():
         self.currenty=self.starty
         self.currentpiece=[self.getnewpiece(),0]
         if not self.placePiece(self.currentpiece[0],self.currentpiece[1],self.currentx,self.currenty):
+            print('blockout')
             return False
         lines=0
         for line in range(self.hei):
@@ -63,6 +67,7 @@ class tetris():
             self.pg.mixer.Sound.play(self.combosound[self.combo-1])
         elif lines>0:
             self.pg.mixer.Sound.play(self.combosound[7])
+        self.totallines+=lines
         return True
 
         
@@ -176,9 +181,9 @@ class tetris():
                 if x==0 :
                     s = self.pg.Surface((self.tilesize,self.tilesize))
                     s.set_alpha(128)
-                    s.fill((50,50,50))
+                    s.fill((200,200,200))
                     self.screen.blit(s, (tx,ty))
-                    self.pg.draw.rect(self.screen,(110,110,110),(tx,ty,self.tilesize, self.tilesize),1)
+                    self.pg.draw.rect(self.screen,(10,10,10),(tx,ty,self.tilesize, self.tilesize),1)
                 if self.ghost:
                     if (xi>=g[0] and
                         xi<g[0]+g[3] and
@@ -232,7 +237,10 @@ class tetris():
                            (T.offset[0]+(self.wid*self.tilesize),T.offset[1]+(20*self.tilesize)),
                            (T.offset[0]+(self.wid*self.tilesize),T.offset[1])
                            ),5)
-    
+        f=self.pg.font.SysFont(None,100)
+        cobo=f.render(str(self.goal-self.totallines),True,(0,0,0))
+        cobo.set_alpha(100)
+        self.screen.blit(cobo,cobo.get_rect(center=(self.offset[0]+((self.wid/2)*self.tilesize),self.offset[1]+((20/2)*self.tilesize))))
 
     def place(self,n,r,x,y):
         p=self.ps[n][r]
@@ -264,8 +272,17 @@ class tetris():
                         
                         
         
-            
-                            
+
+keys={
+    'up':pygame.K_w,
+    'down':pygame.K_s,
+    'left':pygame.K_a,
+    'right':pygame.K_d,
+    'rotatec':pygame.K_l,
+    'rotatecc':pygame.K_k,
+    'hold':pygame.K_SPACE,
+    'pause':pygame.K_e
+}
 T=tetris()
 lockingdelay=0.6
 pygame.init()
@@ -289,30 +306,40 @@ rotatesound = pygame.mixer.Sound("rotate.wav")
 movesound = pygame.mixer.Sound("move.wav")
 harddropsound = pygame.mixer.Sound("harddrop.wav")
 holdsound=pygame.mixer.Sound("hold.wav")
+background_image=pygame.image.load('bg.jpg')
+background_image=pygame.transform.scale(background_image,(wid+10,hei+10))
 getTicksLastFrame = pygame.time.get_ticks()
 pygame.font.init()
-myfont = pygame.font.SysFont('monospace', 30)
+myfont = pygame.font.Font('./DelaGothicOne-Regular.ttf', 20)
 while running:
+    screen.fill(0)
+    screen.blit(background_image, [(T.offset[ofs]-originalof[ofs]-5)/-2 for ofs in range(2)])
     cur=time.time()
     t = pygame.time.get_ticks()
     # deltaTime in seconds.
     deltaTime = (t - getTicksLastFrame) / 1000.0
     getTicksLastFrame = t
-    screen.fill(0)
     clock.tick(30)
+    if cur-timers[0]>0.5:
+        timers[0]=cur
+        hold=True
+        if not T.newpiece():
+            running=False
+
+
     for event in pygame.event.get():
         if event.type==pygame.QUIT:
             running=False
         if event.type==pygame.KEYUP:
-            if event.key==pygame.K_d:
+            if event.key==keys['right']:
                 dire[0]==False
                 timers[1]=cur
-            if event.key==pygame.K_a:
+            if event.key==keys['left']:
                 dire[1]==False
                 timers[1]=cur
             
         if event.type==pygame.KEYDOWN:
-            if event.key==pygame.K_d:
+            if event.key==keys['right']:
                 dire[0]==True
                 if T.move([1,0]):
                     pygame.mixer.Sound.play(movesound)
@@ -320,7 +347,7 @@ while running:
                     timers[1]=cur
                 
                 
-            elif event.key==pygame.K_a:
+            elif event.key==keys['left']:
                 dire[1]==True
                 if T.move([-1,0]):
                     pygame.mixer.Sound.play(movesound)
@@ -328,26 +355,25 @@ while running:
                     timers[2]=cur
                 
                 
-            elif event.key==pygame.K_k:
+            elif event.key==keys['rotatecc']:
                 if T.rotate(1):
                     pygame.mixer.Sound.play(rotatesound)
                     timers[0]=cur
                 
                 
-            elif event.key==pygame.K_l:
+            elif event.key==keys['rotatec']:
                 if T.rotate(-1):
                     pygame.mixer.Sound.play(rotatesound)
                     timers[0]=cur
                 
                 
-            elif event.key==pygame.K_SPACE:
+            elif event.key==keys['hold']:
                 if hold:
                     pygame.mixer.Sound.play(holdsound)
                     hold=False
                     if T.h==[-1,-1]:
                         T.h=T.currentpiece
                         T.setpiece(T.getnewpiece())
-                        hold=True
                         T.hold=hold
                     else:
                         hold=False
@@ -357,7 +383,7 @@ while running:
                         T.setpiece(h2[0])
                         
                         
-            elif event.key==pygame.K_w:
+            elif event.key==keys['up']:
                 velocity[1]+=(40-T.currenty)/2
                 while T.move([0,1]):
                     pass
@@ -368,7 +394,7 @@ while running:
                 hold=True
                         
                         
-            elif event.key==pygame.K_e:
+            elif event.key==keys['pause']:
                 pause=True
                 pauses=cur
                 selected=0
@@ -392,10 +418,10 @@ while running:
                     else:
                         pygame.draw.rect(screen,(100,100,100),(((wid/2)-110)*percent,((hei/2)),220*percent,120))
                     if cur-pauses>0.2:
-                        resume=myfont.render('Resume',True,40)
+                        resume=myfont.render('Resume',True,(255,255,255))
                         text_rect = resume.get_rect(center=((wid/2), (hei/2)-100))
                         screen.blit(resume,text_rect)
-                        qu=myfont.render('QUIT',True,40)
+                        qu=myfont.render('QUIT',True,(255,255,255))
                         text_rect = qu.get_rect(center=((wid/2), (hei/2)+60))
                         screen.blit(qu,text_rect)
                     for event in pygame.event.get():
@@ -458,48 +484,40 @@ while running:
                                 pause=False
                                 
                     pygame.display.update()
-                        
-                        
                     
                     
-    keys=pygame.key.get_pressed()
-    if keys[pygame.K_d] and dire[0]:
+    kys=pygame.key.get_pressed()
+    if kys[keys['right']] and dire[0]:
         if cur-timers[1]>das and cur-timers[3]>arr:
             timers[3]=cur
             if T.move([1,0]):
                 pygame.mixer.Sound.play(movesound)
             else:
-                velocity=[velocity[0]+5,velocity[1]]
+                velocity=[velocity[0]+2,velocity[1]]
                 
                 
-    if keys[pygame.K_a] and dire[1]:
+    if kys[keys['left']] and dire[1]:
         if cur-timers[2]>das and cur-timers[4]>arr:
             timers[4]=cur
             if T.move([-1,0]):
                 pygame.mixer.Sound.play(movesound)
             else:
-                velocity=[velocity[0]-5,velocity[1]]
+                velocity=[velocity[0]-2,velocity[1]]
     
         
-    if (keys[pygame.K_s] and cur-down>0.01) or cur-ori>0.3:
+    if (kys[keys['down']] and cur-down>0.01) or cur-ori>0.3:
         down=cur
         ori=cur
         if not T.move([0,1]):
-            if keys[pygame.K_s]:
+            if kys[keys['down']]:
                 velocity[1]+=5
             pass
         else:
-            if keys[pygame.K_s]:
+            if kys[keys['down']]:
                 pygame.mixer.Sound.play(movesound)
             timers[0]=cur
             
-        
-        
-    if cur-timers[0]>0.5:
-        timers[0]=cur
-        hold=True
-        if not T.newpiece():
-            running=False
+
     v2=((T.offset[0]-originalof[0]),(T.offset[1]-originalof[1]))
     velocity=[velocity[0]-(deltaTime*(5*v2[0])),velocity[1]-(deltaTime*(5*v2[1]))]
     velocity=[nor if abs(nor:=velocity[0]*0.5)>0.2 else 0,
